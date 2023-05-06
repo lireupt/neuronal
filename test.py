@@ -27,7 +27,7 @@ from sklearn.metrics import mean_absolute_error
 
 #Load dataset
 #dataset 1
-data        = pd.read_csv("LCAlgarve1.csv")
+data        = pd.read_csv("LCAlgarvetest.csv")
 
 #dataset 2
 #data = pd.read_csv("LCAlgarve2.csv")
@@ -284,4 +284,3 @@ plt.legend(fontsize=16)
 
 # Display the plot
 plt.show()
-
