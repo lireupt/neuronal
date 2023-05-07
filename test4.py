@@ -6,7 +6,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 
 # Load data
-df = pd.read_csv('LCAlgarve1.csv', parse_dates=True, index_col='DayCode1')
+df = pd.read_csv('LCAlgarvetest.csv', parse_dates=True, index_col='DayCode1')
 
 # Prepare data
 data = df[['Occupation1', 'Power1']]
@@ -35,7 +35,7 @@ y_train, y_test = y[:train_size], y[train_size:]
 
 # Build LSTM model
 model = Sequential()
-model.add(LSTM(100, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
 model.add(LSTM(32))
 model.add(Dense(forecast_steps))
 model.compile(loss='mean_squared_error', optimizer='adam')
