@@ -199,7 +199,7 @@ X_train.shape
 # Defining the LSTM model
 model = models.Sequential()
 # Adding the first layer with 100 LSTM units and input shape of the data
-model.add(layers.LSTM(100, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(layers.LSTM(50, input_shape=(X_train.shape[1], X_train.shape[2])))
 # Adding a dropout layer to avoid overfitting
 model.add(layers.Dropout(0.2))
 # Adding a dense layer with 1 unit to make predictions
@@ -210,7 +210,7 @@ model.compile(loss='mean_squared_error', optimizer='adam')
 # history = model.fit(X_train, Y_train, epochs=100, batch_size=1240, validation_data=(X_test, Y_test),
 #                     callbacks=[EarlyStopping(monitor='val_loss', patience=4)], verbose=1, shuffle=False)
 
-history = model.fit(X_train, Y_train, epochs=50, batch_size=64, validation_data=(X_test, Y_test), verbose=1, shuffle=False)
+history = model.fit(X_train, Y_train, epochs=100, batch_size=64, validation_data=(X_test, Y_test), verbose=1, shuffle=False)
 
 
 # Displaying a summary of the model
