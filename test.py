@@ -207,8 +207,12 @@ model.add(layers.Dense(1))
 # Compiling the model with mean squared error as the loss function and using Adam optimizer
 model.compile(loss='mean_squared_error', optimizer='adam')
 # Fitting the model on training data and using early stopping to avoid overfitting
-history = model.fit(X_train, Y_train, epochs=100, batch_size=1240, validation_data=(X_test, Y_test),
-                    callbacks=[EarlyStopping(monitor='val_loss', patience=4)], verbose=1, shuffle=False)
+# history = model.fit(X_train, Y_train, epochs=100, batch_size=1240, validation_data=(X_test, Y_test),
+#                     callbacks=[EarlyStopping(monitor='val_loss', patience=4)], verbose=1, shuffle=False)
+
+history = model.fit(X_train, Y_train, epochs=50, batch_size=64, validation_data=(X_test, Y_test), verbose=1, shuffle=False)
+
+
 # Displaying a summary of the model
 model.summary()
 # make predictions
