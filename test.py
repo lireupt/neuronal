@@ -33,13 +33,13 @@ from sklearn.metrics import mean_absolute_error
 data = pd.read_csv("LCAlgarve2.csv")
 
 #Global dataset by array  variables
-dayCode1    = data["DayCode1"]
-pwr1        = data['Power1']
-occ1        = data["Occupation1"]
+dayCode   = data["DayCode"]
+pwr       = data['Power']
+occ       = data["Occupation"]
 
 #Sort day code by ascending
 # dayCodeSort = data.sort_values('DayCode1',ascending=True)
-dayCodeSort =data.sort_values(by="DayCode1", ascending= True)
+dayCodeSort =data.sort_values(by="DayCode", ascending= True)
 # print(dayCodeSort)
 
 #Align dataset
@@ -66,7 +66,7 @@ print(data.dtypes)
 #Testing for Normality
 #We will use D’Agostino’s K^2 Test to determine if our data is normally distributed.
 #In the SciPy implementation of the test, the p-value will be used to make the following interpretation:
-stat, p = stats.normaltest(data.Power1)
+stat, p = stats.normaltest(data.Power)
 print('Statistics=%.3f, p=%.3f' % (stat, p))
 
 # Set the significance level
@@ -78,15 +78,15 @@ if p > alpha:
 else:
     print('Data does not look Gaussian (reject H0)')
 
-print( 'Kurtosis of normal distribution: {}'.format(stats.kurtosis(data.Power1)))
-print( 'Skewness of normal distribution: {}'.format(stats.skew(data.Power1)))
+print( 'Kurtosis of normal distribution: {}'.format(stats.kurtosis(data.Power)))
+print( 'Skewness of normal distribution: {}'.format(stats.skew(data.Power)))
 
 
 # Calculate summary statistics by occupation
-stats = data.groupby('DayCode1').agg({'Occupation1': ['mean', 'std']})
+stats = data.groupby('DayCode').agg({'Occupation': ['mean', 'std']})
 stats.columns = [' '.join(col).strip() for col in stats.columns.values]
 # Create a normal plot using seaborn
-sns.displot(data, x='Power1', hue='Occupation1', kind='kde', fill=True)
+sns.displot(data, x='Power', hue='Occupation', kind='kde', fill=True)
 # Show the plot
 # plt.show()
 
@@ -112,9 +112,9 @@ plt.figure(figsize=(15,7))
 # Adjust the subplot's width
 plt.subplots_adjust(wspace=0.2)
 # Create the violinplot using Seaborn's violinplot function
-sns.violinplot(x=dayCode1, y=pwr1, data=data, color='purple')
+sns.violinplot(x=dayCode, y=pwr, data=data, color='purple')
 # Label the x-axis
-plt.xlabel('DayCode1', fontsize=12)
+plt.xlabel('DayCode', fontsize=12)
 # Add a title to the plot
 plt.title('Violin plot of Power', fontsize=14)
 # Remove the top and right spines of the plot
@@ -127,7 +127,7 @@ plt.tight_layout()
 plt.figure(figsize=(15,7))
 # Histogram of 'Power' column
 plt.subplot(1,2,1)
-pwr1.hist(bins=70, color='purple')
+pwr.hist(bins=70, color='purple')
 plt.title('Power Distribution', fontsize=16)
 
 # # Normal Probability Plot of 'Power' column
@@ -147,7 +147,7 @@ plt.show()
 #Modelling and Evaluation
 #Transform the Power column of the data DataFrame into a numpy array of float values
 
-dataset = pwr1.values.astype('float32')
+dataset = pwr.values.astype('float32')
 #Reshape the numpy array into a 2D array with 1 column
 
 dataset = np.reshape(dataset, (-1, 1))
@@ -210,7 +210,7 @@ model.compile(loss='mean_squared_error', optimizer='adam')
 # history = model.fit(X_train, Y_train, epochs=100, batch_size=1240, validation_data=(X_test, Y_test),
 #                     callbacks=[EarlyStopping(monitor='val_loss', patience=4)], verbose=1, shuffle=False)
 
-history = model.fit(X_train, Y_train, epochs=100, batch_size=64, validation_data=(X_test, Y_test), verbose=1, shuffle=False)
+history = model.fit(X_train, Y_train, epochs=50, batch_size=72, validation_data=(X_test, Y_test), verbose=1, shuffle=False)
 
 
 # Displaying a summary of the model

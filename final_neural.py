@@ -67,12 +67,29 @@ print( 'Kurtosis of normal distribution: {}'.format(stats.kurtosis(data.Power)))
 print( 'Skewness of normal distribution: {}'.format(stats.skew(data.Power)))
 
 # Calculate summary statistics by occupation
+plt.figure(figsize=(15,7))
 stats = data.groupby('DayCode').agg({'Occupation': ['mean', 'std']})
 stats.columns = [' '.join(col).strip() for col in stats.columns.values]
 # Create a normal plot using seaborn
 sns.displot(data, x='Power', hue='Occupation', kind='kde', fill=True)
 # Show the plot
 # plt.show()
+
+# Plot the first subplot showing the violinplot of power
+plt.figure(figsize=(15,7))
+# Adjust the subplot's width
+plt.subplots_adjust(wspace=0.2)
+# Create the violinplot using Seaborn's violinplot function
+sns.violinplot(x=dayCode, y=pwr, data=data, color='purple')
+# Label the x-axis
+plt.xlabel('DayCode', fontsize=12)
+# Add a title to the plot
+plt.title('Violin plot of Power', fontsize=14)
+# Remove the top and right spines of the plot
+sns.despine(left=True, bottom=True)
+# Add a tight layout to the plot
+plt.tight_layout()
+
 
 #Plot from Consumption for Dataset
 # Exploratory Data Analysis(EDA)
