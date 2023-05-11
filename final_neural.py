@@ -5,8 +5,6 @@ import sys
 import numpy as np
 np.set_printoptions(threshold=sys.maxsize)
 import matplotlib.pyplot as plt
-
-# Import warnings and set filter to ignore warnings
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -14,20 +12,18 @@ warnings.filterwarnings('ignore')
 # from tensorflow import keras
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense,Dropout
 
 # Import mean squared error and mean absolute error from sklearn
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 
-
 #Load dataset
 #dataset 1
-#data        = pd.read_csv("LCAlgarvetest.csv")
+#data = pd.read_csv("LCAlgarvetest.csv")
 
 #dataset 2
 data = pd.read_csv('LCAlgarve2.csv')
-
 
 #Global dataset by array  variables
 dayCode    = data["DayCode"]
@@ -35,7 +31,6 @@ pwr        = data['Power']
 occ        = data["Occupation"]
 
 # Align dataset
-
 #Sort day code by ascending
 # dayCodeSort = data.sort_values('DayCode1',ascending=True)
 dayCodeSort =data.sort_values(by="DayCode", ascending= True)
@@ -71,7 +66,6 @@ else:
 print( 'Kurtosis of normal distribution: {}'.format(stats.kurtosis(data.Power)))
 print( 'Skewness of normal distribution: {}'.format(stats.skew(data.Power)))
 
-
 # Calculate summary statistics by occupation
 stats = data.groupby('DayCode').agg({'Occupation': ['mean', 'std']})
 stats.columns = [' '.join(col).strip() for col in stats.columns.values]
@@ -106,84 +100,83 @@ plt.title('Power Distribution', fontsize=16)
 # # # Normal Probability Plot of 'Power' column
 # plt.subplot(1,2,2)
 # # Create the normal probability plot using stats.probplot
-# stats.probplot(data, plot=plt, fit=True, rvalue=True)
+# stats.probplot(pwr, plot=plt, fit=True, rvalue=True)
 # # Add a line to the plot
 # plt.plot([0, max(pwr)], [0, max(pwr)], color='purple', linestyle='--')
 # plt.title('Normal Probability Plot Power', fontsize=14)
 
-
-# Printing the summary statistics of 'Global_active_power' column
+# Printing the summary statistics of 'Power' column
 df= data.describe().T
 # print(df.to_string())
-plt.show()
+# plt.show()
 
 # #Modelling and Evaluation
 # #Transform the Global_active_power column of the data DataFrame into a numpy array of float values
-# Prepare data
-data = data[['Occupation', 'Power']]
-scaler = MinMaxScaler()
-scaled_data = scaler.fit_transform(data)
+# Scale the data
+scaler_X = MinMaxScaler()
+scaler_y = MinMaxScaler()
+data[['Power']] = scaler_y.fit_transform(data[['Power']])
+data[['Occupation']] = scaler_X.fit_transform(data[['Occupation']])
 
-# Define time steps and forecast steps
-time_steps = 96 # 15 minutes per time step
-forecast_steps = 48 # 12 hours ahead
+# Prepare the data for training and testing
+lookback = 96  # 24 hours * 4 (15-minute intervals per hour)
+horizon = 8    # 2 days ahead * 4 (15-minute intervals per hour)
 
-# Create input and output sequences
 X = []
 y = []
-for i in range(time_steps, len(scaled_data) - forecast_steps):
-    X.append(scaled_data[i-time_steps:i])
-    y.append(scaled_data[i:i+forecast_steps, 1]) # select only power variable for y
-
-# Convert to numpy arrays
+for i in range(len(data)-lookback-horizon+1):
+    X.append(data[['Occupation', 'Power']].values[i:(i+lookback), :])
+    y.append(data['Power'].values[(i+lookback):(i+lookback+horizon)])
 X = np.array(X)
 y = np.array(y)
 
-# Split data into train and test sets
-train_size = int(0.8 * len(X))
-X_train, X_test = X[:train_size], X[train_size:]
-y_train, y_test = y[:train_size], y[train_size:]
+train_size = int(len(X) * 0.8)
+test_size = len(X) - train_size
+train_X, test_X = X[0:train_size,:,:], X[train_size:len(X),:,:]
+train_y, test_y = y[0:train_size,:], y[train_size:len(y),:]
 
-# Build LSTM model
+# Define the LSTM model
 model = Sequential()
-model.add(LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
-model.add(LSTM(32))
-model.add(Dense(forecast_steps))
-model.compile(loss='mean_squared_error', optimizer='adam')
+model.add(LSTM(100, input_shape=(train_X.shape[1], train_X.shape[2])))
+model.add(Dropout(0.2))
+model.add(Dense(horizon))
+model.compile(loss='mse', optimizer='adam')
 
-# Train model
-history = model.fit(X_train, y_train, epochs=50, batch_size=64, validation_data=(X_test, y_test), verbose=1, shuffle=False)
+# Fit the NARX model to the training data
+history = model.fit(train_X, train_y, epochs=5, batch_size=72, validation_data=(test_X, test_y), verbose=2, shuffle=False)
 
-# Make predictions
-test_data = X[-1] # select last sequence as test data
-test_data = np.expand_dims(test_data, axis=0)
-predictions = model.predict(test_data)
-
-# Invert scaling and select only power variable
-actual_values = scaler.inverse_transform(np.concatenate((np.zeros((forecast_steps, 1)), y[-1].reshape(-1, 1)), axis=1))[:, 1]
-predicted_values = scaler.inverse_transform(np.concatenate((np.zeros((forecast_steps, 1)), predictions[0].reshape(-1, 1)), axis=1))[:, 1]
-
-# Print results
-print('Actual:', actual_values)
-print('Predicted:', predicted_values)
-
+# Displaying a summary of the model
 model.summary()
 
-plt.figure(figsize=(8,4))
-plt.plot(history.history['loss'], label='Train Loss')
-plt.plot(history.history['val_loss'], label='Test Loss')
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epochs')
+# Make predictions on the test data
+y_pred = model.predict(test_X)
+y_pred = scaler_y.inverse_transform(y_pred)
+test_y = scaler_y.inverse_transform(test_y)
+
+
+# # Evaluate the model
+train_score = model.evaluate(train_X, train_y, verbose=0)
+test_score = model.evaluate(test_X, test_y, verbose=0)
+print('Train Score: {:.2f} MSE ({:.2f} RMSE)'.format(train_score, np.sqrt(train_score)))
+print('Test Score: {:.2f} MSE ({:.2f} RMSE)'.format(test_score, np.sqrt(test_score)))
+
+
+# Plot the training and validation loss
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('LSTM Model Training')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
 plt.legend(loc='upper right')
+plt.show()
 
-
-# Plot the true and predicted values for the test set
-plt.figure(figsize=(12, 6))
-plt.plot(actual_values, label='True')
-plt.plot(predicted_values, label='Predicted')
-plt.title('Electricity Consumption - True vs. Predicted')
-plt.xlabel('Time Steps')
+# Plot the predicted vs. actual electricity consumption for the next 2 days with a 15-minute time interval
+plt.figure(figsize=(20,6))
+plt.plot(test_y[-48*2:, 0], label='Actual')
+plt.plot(y_pred[-48*2:, 0], label='Predicted')
+plt.title('Electricity Consumption Prediction for Next 2 Days')
+plt.xlabel('Time (15-minute intervals)')
 plt.ylabel('Electricity Consumption')
 plt.legend()
+
 plt.show()

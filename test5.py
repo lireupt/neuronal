@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 
 # Load the data
-data = pd.read_csv('LCAlgarve2.csv')
-data['DateTime'] = pd.to_datetime(data['DayCode1'])
-data['daycode'] = data['DateTime'].dt.dayofweek.astype(str) + data['DateTime'].dt.hour.astype(str)
+data = pd.read_csv('LCAlgarve1.csv')
+# data['DateTime'] = pd.to_datetime(data['DayCode1'])
+# data['daycode'] = data['DateTime'].dt.dayofweek.astype(str) + data['DateTime'].dt.hour.astype(str)
 
 # print(data['daycode'])
 
@@ -17,17 +17,19 @@ data['daycode'] = data['DateTime'].dt.dayofweek.astype(str) + data['DateTime'].d
 # Scale the data
 scaler_X = MinMaxScaler()
 scaler_y = MinMaxScaler()
-data[['Consumption']] = scaler_y.fit_transform(data[['Power1']])
-data[['daycode']] = scaler_X.fit_transform(data[['daycode']])
+data[['Power']] = scaler_y.fit_transform(data[['Power']])
+data[['Occupation']] = scaler_X.fit_transform(data[['Occupation']])
 
 # Prepare the data for training and testing
 lookback = 96  # 24 hours * 4 (15-minute intervals per hour)
 horizon = 8    # 2 days ahead * 4 (15-minute intervals per hour)
+
+
 X = []
 y = []
 for i in range(len(data)-lookback-horizon+1):
-    X.append(data[['daycode', 'Power1']].values[i:(i+lookback), :])
-    y.append(data['Power1'].values[(i+lookback):(i+lookback+horizon)])
+    X.append(data[['Occupation', 'Power']].values[i:(i+lookback), :])
+    y.append(data['Power'].values[(i+lookback):(i+lookback+horizon)])
 X = np.array(X)
 y = np.array(y)
 
@@ -36,7 +38,7 @@ test_size = len(X) - train_size
 train_X, test_X = X[0:train_size,:,:], X[train_size:len(X),:,:]
 train_y, test_y = y[0:train_size,:], y[train_size:len(y),:]
 
-# Define the NARX model
+# Define the LSTM model
 model = Sequential()
 model.add(LSTM(100, input_shape=(train_X.shape[1], train_X.shape[2])))
 model.add(Dropout(0.2))
@@ -44,7 +46,7 @@ model.add(Dense(horizon))
 model.compile(loss='mse', optimizer='adam')
 
 # Fit the NARX model to the training data
-history = model.fit(train_X, train_y, epochs=50, batch_size=72, validation_data=(test_X, test_y), verbose=2, shuffle=False)
+history = model.fit(train_X, train_y, epochs=5, batch_size=72, validation_data=(test_X, test_y), verbose=2, shuffle=False)
 
 # Make predictions on the test data
 y_pred = model.predict(test_X)
