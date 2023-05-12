@@ -159,7 +159,7 @@ model.add(Dropout(0.2))
 model.add(Dense(horizon))
 model.compile(loss='mse', optimizer='adam')
 
-# Fit the NARX model to the training data
+# Fit the LSTM model to the training data
 history = model.fit(train_X, train_y, epochs=5, batch_size=72, validation_data=(test_X, test_y), verbose=2, shuffle=False)
 
 # Displaying a summary of the model
