@@ -136,8 +136,10 @@ data[['Power']] = scaler_y.fit_transform(data[['Power']])
 data[['Occupation']] = scaler_X.fit_transform(data[['Occupation']])
 
 # Prepare the data for training and testing
-lookback = 96  # 24 hours * 4 (15-minute intervals per hour)
+lookback = 380 # 24 hours * 4 (15-minute intervals per hour)
+# lookback = 380 # 24 hours * 4 (15-minute intervals per hour)
 horizon = 8    # 2 days ahead * 4 (15-minute intervals per hour)
+# horizon = 15*24*4    # 2 days ahead * 4 (15-minute intervals per hour)
 
 X = []
 y = []
@@ -149,8 +151,8 @@ y = np.array(y)
 
 train_size = int(len(X) * 0.8)
 test_size = len(X) - train_size
-train_X, test_X = X[0:train_size,:,:], X[train_size:len(X),:,:]
-train_y, test_y = y[0:train_size,:], y[train_size:len(y),:]
+train_X, test_X = X[0:train_size, :, :], X[train_size:, :, :]
+train_y, test_y = y[0:train_size, :], y[train_size:, :]
 
 # Define the LSTM model
 model = Sequential()
@@ -189,8 +191,8 @@ plt.show()
 
 # Plot the predicted vs. actual electricity consumption for the next 2 days with a 15-minute time interval
 plt.figure(figsize=(20,6))
-plt.plot(test_y[-48*2:, 0], label='Actual')
-plt.plot(y_pred[-48*2:, 0], label='Predicted')
+plt.plot(test_y[-100*2:, 0], label='Actual')
+plt.plot(y_pred[-100*2:, 0], label='Predicted')
 plt.title('Electricity Consumption Prediction for Next 2 Days')
 plt.xlabel('Time (15-minute intervals)')
 plt.ylabel('Electricity Consumption')
